@@ -1,27 +1,35 @@
-import os
-import requests
-import openai
-from dotenv import load_dotenv
+# Import standard library modules
+import os  # For environment variables and system operations
+import requests  # For making HTTP requests to GitHub API
+import openai  # OpenAI API client
+from dotenv import load_dotenv  # Load environment variables from .env file
 
-load_dotenv()
+# Load environment variables from .env file
+load_dotenv()  # Loads OPENAI_API_KEY, GITHUB_REPOSITORY, GITHUB_TOKEN, etc.
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-repo = os.getenv("GITHUB_REPOSITORY")
-pr_number = os.getenv("GITHUB_REF").split("/")[-1]
-github_token = os.getenv("GITHUB_TOKEN")
+# Set up API keys and repository info
+openai.api_key = os.getenv("OPENAI_API_KEY")  # OpenAI API key
+repo = os.getenv("GITHUB_REPOSITORY")  # GitHub repository in format "owner/repo"
+pr_number = os.getenv("GITHUB_REF").split("/")[-1]  # Extract PR number from ref
+github_token = os.getenv("GITHUB_TOKEN")  # GitHub personal access token
 
+# Prepare headers for GitHub API requests
 headers = {
-    "Authorization": f"token {github_token}",
-    "Accept": "application/vnd.github.v3+json"
+    "Authorization": f"token {github_token}",  # Auth token
+    "Accept": "application/vnd.github.v3+json"  # GitHub REST API v3
 }
 
+# Function to get list of changed files in the PR
 def get_changed_files():
+    # Build URL to fetch PR files
     url = f"https://api.github.com/repos/{repo}/pulls/{pr_number}/files"
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.json()
+    response = requests.get(url, headers=headers)  # Make GET request
+    response.raise_for_status()  # Raise exception if request failed
+    return response.json()  # Return JSON list of files
 
+# Function to send diff to OpenAI and get code review feedback
 def review_code_with_gpt(diff):
+    # Construct prompt for GPT to review the code diff
     prompt = f"""You're an expert code reviewer. Review the following diff and provide constructive feedback.
 
 ```diff
